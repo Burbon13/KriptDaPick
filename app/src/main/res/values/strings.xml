@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">KriptDaPick</string>
+    <string name="encrypt_image_button">Encrypt</string>
 </resources>
