@@ -33,11 +33,11 @@ class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {
         //(0,0),(0,1),(0,2),(0,3) - consider the length to be short
         //Log.d("encryptLength", "BA" + String.valueOf(length));
         int length = text.length();
-        Log.d(TAG, "Length in binary: " + Integer.toBinaryString(length));
+        //Log.d(TAG, "Length in binary: " + Integer.toBinaryString(length));
         int color, bit1, bit2, bit3, bit0;
         for(int i = 0; i < 4; i++) {
             color = bitmap.getPixel(0,i);
-            Log.d(TAG, Integer.toBinaryString(color));
+            //Log.d(TAG, Integer.toBinaryString(color));
             bit0 = length & 1;
             bit1 = (length & 2) >> 1;
             bit2 = (length & 4) >> 2;
@@ -51,11 +51,11 @@ class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {
             color |= (bit3 << 24);
             //Log.d("encryptLength", String.valueOf(bit3)+String.valueOf(bit2)+String.valueOf(bit1)+String.valueOf(bit0));
             bitmap.setPixel(0,i,color);
-            Log.d(TAG, Integer.toBinaryString(color));
-            Log.d(TAG, Integer.toBinaryString(bitmap.getPixel(0,i)));
+            //Log.d(TAG, Integer.toBinaryString(color));
+            //Log.d(TAG, Integer.toBinaryString(bitmap.getPixel(0,i)));
             if(color != bitmap.getPixel(0,i))
                 Log.d(TAG, "WTF!");
-            Log.d(TAG, "-------------");
+            //Log.d(TAG, "-------------");
 
         }
     }

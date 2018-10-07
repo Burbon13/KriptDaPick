@@ -9,9 +9,11 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.Image;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -19,13 +21,18 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Random;
 
 
@@ -33,11 +40,14 @@ import java.util.Random;
 interface AsyncPhotoAsyncResponse {
     void onFinishEncryption(String output);
     void onFinishDecryption(String output);
+    void onFinishSaving(String output);
 }
 
 public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncResponse {
     private static final int PHOTO_PICKER_CODE = 123;
     private static final int READ_EXTERNAL_STORAGE_REQUEST_CODE = 69;
+    private static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 73;
+    public static final int MAX_TEXT_LENGTH = 30000;
     private static final String TAG = "MainActivity";
     private Bitmap imageBitmap = null;
     private ImageView ivEncrypt = null;
@@ -49,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        findViewById(R.id.pbAsync).setVisibility(View.GONE);
         ivEncrypt = findViewById(R.id.ivEncrypt);
         etData = findViewById(R.id.etData);
         setListeners();
@@ -64,6 +75,60 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
                 Toast.makeText(getApplicationContext(), "Make full screen", Toast.LENGTH_LONG).show();
             }
         });
+
+        findViewById(R.id.ivDownload).setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        saveImagePermission();
+                        v.performClick();
+                        break;
+                    default:
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
+    private void prepareForAsync() {
+        findViewById(R.id.pbAsync).setVisibility(View.VISIBLE);
+        findViewById(R.id.buDecrypt).setEnabled(false);
+        findViewById(R.id.buEncrypt).setEnabled(false);
+        findViewById(R.id.buSelect).setEnabled(false);
+        findViewById(R.id.etData).setEnabled(false);
+        findViewById(R.id.ivDownload).setEnabled(false);
+    }
+
+    private void restoreAfterAsync() {
+        findViewById(R.id.pbAsync).setVisibility(View.GONE);
+        findViewById(R.id.buDecrypt).setEnabled(true);
+        findViewById(R.id.buEncrypt).setEnabled(true);
+        findViewById(R.id.buSelect).setEnabled(true);
+        findViewById(R.id.etData).setEnabled(true);
+        findViewById(R.id.ivDownload).setEnabled(true);
+    }
+
+    private void saveImagePermission() {
+        //TODO: Save image on phone
+        if(Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    WRITE_EXTERNAL_STORAGE_REQUEST_CODE);
+            return;
+        }
+        saveImageToPhone();
+    }
+
+    private void saveImageToPhone() {
+        prepareForAsync();
+        ImageDTO imgDTO = new ImageDTO(imageBitmap, null, this);
+        AsyncPhotoSaver myThread = new AsyncPhotoSaver(imgDTO);
+        myThread.execute(null,null,null);
     }
 
     private void pickPhotoFromPhone() {
@@ -90,6 +155,13 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
                     Toast.makeText(this, "Permission denied!", Toast.LENGTH_LONG).show();
                 }
             }
+            case WRITE_EXTERNAL_STORAGE_REQUEST_CODE: {
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                    saveImageToPhone();
+                else {
+                    Toast.makeText(this, "Permission denied!", Toast.LENGTH_LONG).show();
+                }
+            }
         }
     }
 
@@ -106,18 +178,6 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     private void loadImageFromUri(Uri pickedImageUri) {
-//        Log.d(TAG, "Uri: " + pickedImageUri);
-//        String[] filePath = {MediaStore.Images.Media.DATA};
-//        Log.d(TAG, "MediaStore.Images.Media.DATA: " + MediaStore.Images.Media.DATA);
-//        Cursor cursor = getContentResolver().query(pickedImageUri, filePath, null,
-//                null , null);
-//        Log.d(TAG, "Cursor: " + cursor);
-//        cursor.moveToFirst();
-//        Log.d(TAG, "Cursor -> move to firse: " + cursor);
-//        String imagePath = cursor.getString(cursor.getColumnIndex(filePath[0]));
-//        Log.d(TAG, "imagePath: " + imagePath);
-//        cursor.close();
-
         //TODO: Verify is the image is at least 100X100
         Log.d(TAG, "image uri: " + pickedImageUri);
         try {
@@ -144,8 +204,20 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             return;
         }
 
-        //TODO:String length max 32767
+        if(etData.getText().length() > MAX_TEXT_LENGTH) {
+            Toast.makeText(getApplicationContext(), R.string.text_too_big, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if(etData.getText().length() == 0) {
+            Toast.makeText(getApplicationContext(), R.string.text_non_existent, Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        //TODO:String length max 30000
         ImageDTO imageDTO = new ImageDTO(imageBitmap, etData.getText().toString(),this);
+
+        prepareForAsync();
 
         //TODO: Verify first if the image is big enough!
         AsyncPhotoEncryption myThread = new AsyncPhotoEncryption();
@@ -159,7 +231,11 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             return;
         }
 
+        etData.setText("");
+
         ImageDTO imageDTO = new ImageDTO(imageBitmap, null, this);
+
+        prepareForAsync();
 
         AsyncPhotoDecryption myThread = new AsyncPhotoDecryption();
         myThread.execute(imageDTO,null,null);
@@ -173,12 +249,44 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     public void onFinishEncryption(String output) {
         Toast.makeText(getApplicationContext(), output, Toast.LENGTH_LONG).show();
         ivEncrypt.setImageBitmap(imageBitmap);
+        restoreAfterAsync();
     }
 
     @Override
     public void onFinishDecryption(String output) {
-        Toast.makeText(getApplicationContext(), "Decryption finished", Toast.LENGTH_LONG).show();
-        etData.setText(output);
+        if(output.length() == 0)
+            Toast.makeText(getApplicationContext(), R.string.sth_wrong, Toast.LENGTH_LONG).show();
+        else
+            etData.setText(output);
+        restoreAfterAsync();
+    }
+
+    @Override
+    public void onFinishSaving(String output) {
+        if(output == null)
+            Toast.makeText(getApplicationContext(), R.string.successful_save, Toast.LENGTH_LONG).show();
+        else
+            Toast.makeText(getApplicationContext(), output, Toast.LENGTH_LONG).show();
+        restoreAfterAsync();
+        //TODO: Make it work...?
+        //scanIt();
+    }
+
+    private void scanIt() {
+        Log.d(TAG, "Scanning");
+        String path = Environment.getExternalStorageDirectory().toString() + "/Pictures/KriptDaPick";
+
+        ArrayList<String> toBeScanned = new ArrayList<String>();
+        toBeScanned.add(path);
+        String[] toBeScannedStr = new String[toBeScanned.size()];
+        toBeScannedStr = toBeScanned.toArray(toBeScannedStr);
+        MediaScannerConnection.scanFile(this, toBeScannedStr, null, new MediaScannerConnection.OnScanCompletedListener() {
+            @Override
+            public void onScanCompleted(String path, Uri uri) {
+                Log.d(TAG, "SCAN COMPLETED: " + path);
+            }
+        });
+        Log.d(TAG, "Finished scanning");
     }
 }
 

@@ -7,4 +7,8 @@
     <string name="view_photo_bu">Examine</string>
     <string name="text_to_encrypt_hint">Text to encrypt</string>
     <string name="decrypt_image_button">Decrypt</string>
+    <string name="text_too_big">The text exceeds the size limit!</string>
+    <string name="text_non_existent">There is no text to use :(</string>
+    <string name="sth_wrong">Something went wrong\.\.\.</string>
+    <string name="successful_save">Image saved ;)</string>
 </resources>

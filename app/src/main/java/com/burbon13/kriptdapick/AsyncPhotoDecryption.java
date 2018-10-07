@@ -55,6 +55,8 @@ public class AsyncPhotoDecryption extends AsyncTask<ImageDTO, Void, String> {
                 c += toAdd;
             }
             strB.append((char)c);
+            if(strB.toString().length() >= MainActivity.MAX_TEXT_LENGTH)
+                 return "";
         }
         return strB.toString();
     }
