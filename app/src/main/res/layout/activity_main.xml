@@ -11,18 +11,73 @@
         android:layout_width="100pt"
         android:layout_height="100pt"
         android:layout_marginTop="32dp"
+        android:contentDescription="@string/iv_description"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/picture" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/buSelect"
         android:layout_width="wrap_content"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="148dp"
         android:layout_marginTop="32dp"
-        android:text="@string/encrypt_image_button"
+        android:onClick="onSelectEvent"
+        android:text="@string/select_photo_bu"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/ivEncrypt" />
+
+    <EditText
+        android:id="@+id/etData"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:ems="10"
+        android:hint="@string/text_to_encrypt_hint"
+        android:inputType="textPersonName"
+        android:singleLine="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buSelect" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:gravity="bottom"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.6"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etData">
+
+        <Button
+            android:id="@+id/buEncrypt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="onEncryptEvent"
+            android:text="@string/encrypt_image_button"
+            tools:layout_editor_absoluteX="161dp"
+            tools:layout_editor_absoluteY="471dp" />
+
+        <Button
+            android:id="@+id/buDecrypt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:onClick="onDecryptEvent"
+            android:text="@string/decrypt_image_button"
+            tools:layout_editor_absoluteX="0dp"
+            tools:layout_editor_absoluteY="471dp" />
+    </LinearLayout>
 </android.support.constraint.ConstraintLayout>

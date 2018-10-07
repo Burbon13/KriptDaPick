@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">KriptDaPick</string>
     <string name="encrypt_image_button">Encrypt</string>
+    <string name="iv_description">The image to encrypt in</string>
+    <string name="no_selection">You haven\'t selected a picture</string>
+    <string name="select_photo_bu">Select</string>
+    <string name="view_photo_bu">Examine</string>
+    <string name="text_to_encrypt_hint">Text to encrypt</string>
+    <string name="decrypt_image_button">Decrypt</string>
 </resources>
