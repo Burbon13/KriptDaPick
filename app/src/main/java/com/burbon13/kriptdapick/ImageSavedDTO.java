@@ -4,7 +4,7 @@ public class ImageSavedDTO {
     private String data;
     private int returnCode;
 
-    public ImageSavedDTO(String data, int returnCode) {
+    ImageSavedDTO(String data, int returnCode) {
         this.data = data;
         this.returnCode = returnCode;
     }

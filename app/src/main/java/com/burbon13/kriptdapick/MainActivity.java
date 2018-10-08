@@ -23,13 +23,9 @@ import android.widget.Toast;
 import java.io.IOException;
 import java.util.ArrayList;
 
-
-//TODO: See where to move the interfaces & change the fucking name :))))
-interface AsyncPhotoAsyncResponse {
-    void onFinishEncryption(String output);
-    void onFinishDecryption(String output);
-    void onFinishSaving(ImageSavedDTO result);
-}
+//--------------IDEAS--------------
+//1) Make encryption and decryption on threads ^^
+//---------------------------------
 
 public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncResponse {
     private static final int PHOTO_PICKER_CODE = 123;
@@ -40,14 +36,15 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     private Bitmap imageBitmap = null;
     private ImageView ivEncrypt = null;
     private EditText etData = null;
-    private boolean imageIsSelected = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        findViewById(R.id.ivFullScreen).setVisibility(View.GONE);
         findViewById(R.id.pbAsync).setVisibility(View.GONE);
+        findViewById(R.id.ivBack).setVisibility(View.GONE);
         ivEncrypt = findViewById(R.id.ivEncrypt);
         etData = findViewById(R.id.etData);
         setListeners();
@@ -59,8 +56,16 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
 
             @Override
             public void onClick(View v) {
-                //TODO: Make picture fullscreen to let the user examine it
-                Toast.makeText(getApplicationContext(), "Make full screen", Toast.LENGTH_LONG).show();
+                if(imageBitmap == null) {
+                    Toast.makeText(getApplicationContext(), R.string.no_selection,
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+//                Intent intent = new Intent(getApplicationContext(),FullScreenImage.class);
+//                intent.putExtra("bitmapImage", imageBitmap);
+//                startActivity(intent);
+                makePictureFullScreen();
             }
         });
 
@@ -80,6 +85,53 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
                 return true;
             }
         });
+
+        findViewById(R.id.ivBack).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                makePictureDisappear();
+            }
+        });
+    }
+
+    private void makePictureFullScreen() {
+        findViewById(R.id.ivEncrypt).setEnabled(false);
+        findViewById(R.id.buDecrypt).setEnabled(false);
+        findViewById(R.id.buEncrypt).setEnabled(false);
+        findViewById(R.id.buSelect).setEnabled(false);
+        findViewById(R.id.etData).setEnabled(false);
+        findViewById(R.id.ivDownload).setEnabled(false);
+        findViewById(R.id.ivEncrypt).setVisibility(View.GONE);
+        findViewById(R.id.buDecrypt).setVisibility(View.GONE);
+        findViewById(R.id.buEncrypt).setVisibility(View.GONE);
+        findViewById(R.id.buSelect).setVisibility(View.GONE);
+        findViewById(R.id.etData).setVisibility(View.GONE);
+        findViewById(R.id.ivDownload).setVisibility(View.GONE);
+        ImageView ivEncrypt = (ImageView) findViewById(R.id.ivFullScreen);
+        ivEncrypt.setImageBitmap(imageBitmap);
+        ivEncrypt.setVisibility(View.VISIBLE);
+        findViewById(R.id.ivBack).setEnabled(true);
+        findViewById(R.id.ivBack).setVisibility(View.VISIBLE);
+    }
+
+    private void makePictureDisappear() {
+        findViewById(R.id.ivEncrypt).setEnabled(true);
+        findViewById(R.id.buDecrypt).setEnabled(true);
+        findViewById(R.id.buEncrypt).setEnabled(true);
+        findViewById(R.id.buSelect).setEnabled(true);
+        findViewById(R.id.etData).setEnabled(true);
+        findViewById(R.id.ivDownload).setEnabled(true);
+        findViewById(R.id.ivEncrypt).setVisibility(View.VISIBLE);
+        findViewById(R.id.buDecrypt).setVisibility(View.VISIBLE);
+        findViewById(R.id.buEncrypt).setVisibility(View.VISIBLE);
+        findViewById(R.id.buSelect).setVisibility(View.VISIBLE);
+        findViewById(R.id.etData).setVisibility(View.VISIBLE);
+        findViewById(R.id.ivDownload).setVisibility(View.VISIBLE);
+        ImageView ivEncrypt = (ImageView) findViewById(R.id.ivFullScreen);
+        ivEncrypt.setImageBitmap(imageBitmap);
+        ivEncrypt.setVisibility(View.GONE);
+        findViewById(R.id.ivBack).setVisibility(View.GONE);
+        findViewById(R.id.ivBack).setEnabled(false);
     }
 
     private void prepareForAsync() {
@@ -101,7 +153,6 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     private void saveImagePermission() {
-        //TODO: Save image on phone
         if(Build.VERSION.SDK_INT >= 23 && ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -166,9 +217,15 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     private void loadImageFromUri(Uri pickedImageUri) {
-        //TODO: Verify is the image is at least 100X100
-        Log.d(TAG, "image uri: " + pickedImageUri);
+        Log.v(TAG, "Image loaded from memory: " + pickedImageUri);
         try {
+            if(MediaStore.Images.Media.getBitmap(getContentResolver(), pickedImageUri).getWidth() < 100
+                    || MediaStore.Images.Media.getBitmap(getContentResolver(), pickedImageUri).getHeight() < 100) {
+                Toast.makeText(getApplicationContext(), R.string.image_too_small, Toast.LENGTH_LONG).show();
+                Log.v(TAG, "Image " + pickedImageUri + " too small, not saving it");
+                return;
+            }
+
             imageBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), pickedImageUri)
             .copy(Bitmap.Config.ARGB_8888, true);
 
@@ -177,17 +234,13 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             // the setPixel() method was multiplying the red,green, and blue values
             // by the alpha, then only setting r,g,b.
             imageBitmap.setHasAlpha(true); //Huh
-            imageIsSelected = true;
         } catch (IOException e) {
-            Log.w(TAG, "Loading imageBitmap did not work: " + e.getMessage());
-            Log.d(TAG, "exception", e);
+            Log.w(TAG, "Loading image did not work: " + e.getMessage());
         }
 
     }
 
     public void onEncryptEvent(View view) {
-        //TODO: Stop if the picture is too small
-        //Make a thread here boss!
         if(imageBitmap == null) {
             Toast.makeText(getApplicationContext(), R.string.no_selection, Toast.LENGTH_LONG).show();
             return;
@@ -203,12 +256,10 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             return;
         }
 
-        //TODO:String length max 30000
         ImageDTO imageDTO = new ImageDTO(imageBitmap, etData.getText().toString(),this);
 
         prepareForAsync();
 
-        //TODO: Verify first if the image is big enough!
         AsyncPhotoEncryption myThread = new AsyncPhotoEncryption();
         myThread.execute(imageDTO,null,null);
         //TODO: May want to have an encryption function for the string
@@ -235,9 +286,10 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     @Override
-    public void onFinishEncryption(String output) {
-        Toast.makeText(getApplicationContext(), output, Toast.LENGTH_LONG).show();
-        ivEncrypt.setImageBitmap(imageBitmap);
+    public void onFinishEncryption(ImageSavedDTO result) {
+        if(result.getReturnCode() == 0)
+            ivEncrypt.setImageBitmap(imageBitmap);
+        Toast.makeText(getApplicationContext(), result.getData(), Toast.LENGTH_LONG).show();
         restoreAfterAsync();
     }
 
@@ -257,7 +309,6 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             Log.w(TAG, "Error on saving image: " + result.getData());
             return;
         }
-        //TODO: Make it work...?
         notifyImageSaved(result.getData());
     }
 

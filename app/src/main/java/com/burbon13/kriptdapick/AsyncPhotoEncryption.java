@@ -4,18 +4,20 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
 
-//TODO: change ui and show progress during this
-class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {
+class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, ImageSavedDTO> {
     private AsyncPhotoAsyncResponse context;
     private Bitmap bitmap;
     private String text;
     private static final String TAG = "AsyncPhotoEncryption";
 
     @Override
-    protected String doInBackground(ImageDTO... dtos) {
+    protected ImageSavedDTO doInBackground(ImageDTO... dtos) {
         bitmap = dtos[0].getBitmap();
         text = dtos[0].getText();
         context = dtos[0].getContext();
+
+        if(!isImageBigEnough())
+            return new ImageSavedDTO("Image size too small", -1);
 
         //First implementation: put on the first pixels the data
         //First 4 pixels will contain the length of the string
@@ -23,19 +25,20 @@ class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {
 
         //Continue with the rest to encrypt the text
         encryptText();
-        return null;
+        return new ImageSavedDTO("Text hid in the picture", 0);
+    }
+
+    private boolean isImageBigEnough() {
+        return ((bitmap.getHeight() * bitmap.getWidth() - 4) / 4) > text.length();
     }
 
     private void encryptLength() {
         //Will hide the length in the following pixels (assuming length is not longer than short):
         //(0,0),(0,1),(0,2),(0,3) - consider the length to be short
-        //Log.d("encryptLength", "BA" + String.valueOf(length));
         int length = text.length();
-        //Log.d(TAG, "Length in binary: " + Integer.toBinaryString(length));
         int color, bit1, bit2, bit3, bit0;
         for(int i = 0; i < 4; i++) {
             color = bitmap.getPixel(0,i);
-            //Log.d(TAG, Integer.toBinaryString(color));
             bit0 = length & 1;
             bit1 = (length & 2) >> 1;
             bit2 = (length & 4) >> 2;
@@ -47,14 +50,7 @@ class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {
             color |= (bit1 << 8);
             color |= (bit2 << 16);
             color |= (bit3 << 24);
-            //Log.d("encryptLength", String.valueOf(bit3)+String.valueOf(bit2)+String.valueOf(bit1)+String.valueOf(bit0));
             bitmap.setPixel(0,i,color);
-            //Log.d(TAG, Integer.toBinaryString(color));
-            //Log.d(TAG, Integer.toBinaryString(bitmap.getPixel(0,i)));
-            if(color != bitmap.getPixel(0,i))
-                Log.d(TAG, "WTF!");
-            //Log.d(TAG, "-------------");
-
         }
     }
 
@@ -89,7 +85,7 @@ class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {
     }
 
     @Override
-    protected void onPostExecute(String s) {
-        context.onFinishEncryption("Image finished");
+    protected void onPostExecute(ImageSavedDTO result) {
+        context.onFinishEncryption(result);
     }
 }

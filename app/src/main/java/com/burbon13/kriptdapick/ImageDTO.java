@@ -2,8 +2,6 @@ package com.burbon13.kriptdapick;
 
 import android.graphics.Bitmap;
 
-
-//TODO: Remove view
 class ImageDTO {
     private Bitmap bitmap;
     private String text;
