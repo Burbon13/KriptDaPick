@@ -1,7 +1,6 @@
 package com.burbon13.kriptdapick;
 
 import android.graphics.Bitmap;
-import android.view.View;
 
 
 //TODO: Remove view

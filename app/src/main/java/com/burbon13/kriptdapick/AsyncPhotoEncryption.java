@@ -3,8 +3,6 @@ package com.burbon13.kriptdapick;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.view.View;
-import android.widget.ImageView;
 
 //TODO: change ui and show progress during this
 class AsyncPhotoEncryption extends AsyncTask<ImageDTO, Void, String> {

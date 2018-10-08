@@ -1,15 +1,12 @@
 package com.burbon13.kriptdapick;
 
-import android.content.Context;
 import android.graphics.Bitmap;
-import android.media.MediaScannerConnection;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.Random;
 
 public class AsyncPhotoSaver extends AsyncTask<Void, Void, ImageSavedDTO> {
