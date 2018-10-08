@@ -40,7 +40,7 @@ import java.util.Random;
 interface AsyncPhotoAsyncResponse {
     void onFinishEncryption(String output);
     void onFinishDecryption(String output);
-    void onFinishSaving(String output);
+    void onFinishSaving(ImageSavedDTO result);
 }
 
 public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncResponse {
@@ -198,6 +198,7 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     public void onEncryptEvent(View view) {
+        //TODO: Stop if the picture is too small
         //Make a thread here boss!
         if(imageBitmap == null) {
             Toast.makeText(getApplicationContext(), R.string.no_selection, Toast.LENGTH_LONG).show();
@@ -262,19 +263,18 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     @Override
-    public void onFinishSaving(String output) {
-        if(output == null)
-            Toast.makeText(getApplicationContext(), R.string.successful_save, Toast.LENGTH_LONG).show();
-        else
-            Toast.makeText(getApplicationContext(), output, Toast.LENGTH_LONG).show();
+    public void onFinishSaving(ImageSavedDTO result) {
         restoreAfterAsync();
+        if(result.getReturnCode() == -1) {
+            Log.w(TAG, "Error on saving image: " + result.getData());
+            return;
+        }
         //TODO: Make it work...?
-        //scanIt();
+        notifyImageSaved(result.getData());
     }
 
-    private void scanIt() {
+    private void notifyImageSaved(String path) {
         Log.d(TAG, "Scanning");
-        String path = Environment.getExternalStorageDirectory().toString() + "/Pictures/KriptDaPick";
 
         ArrayList<String> toBeScanned = new ArrayList<String>();
         toBeScanned.add(path);
@@ -286,7 +286,6 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
                 Log.d(TAG, "SCAN COMPLETED: " + path);
             }
         });
-        Log.d(TAG, "Finished scanning");
     }
 }
 
