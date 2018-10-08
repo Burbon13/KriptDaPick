@@ -16,8 +16,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -33,26 +35,60 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     private static final int WRITE_EXTERNAL_STORAGE_REQUEST_CODE = 73;
     public static final int MAX_TEXT_LENGTH = 30000;
     private static final String TAG = "MainActivity";
+    //My views
     private Bitmap imageBitmap = null;
     private ImageView ivEncrypt = null;
+    private ImageView ivFullScreen = null;
     private EditText etData = null;
+    private ProgressBar pbAsync = null;
+    private ImageView ivBack = null;
+    private Button buDecrypt = null;
+    private Button buEncrypt = null;
+    private Button buSelect = null;
+    private ImageView ivDownload = null;
+    //My main views
+    private ArrayList<View> mainViews = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        findViewById(R.id.ivFullScreen).setVisibility(View.GONE);
-        findViewById(R.id.pbAsync).setVisibility(View.GONE);
-        findViewById(R.id.ivBack).setVisibility(View.GONE);
+        getViews();
+        presetViews();
+        setListeners();
+    }
+
+    private void getViews() {
         ivEncrypt = findViewById(R.id.ivEncrypt);
         etData = findViewById(R.id.etData);
-        setListeners();
+        ivFullScreen = findViewById(R.id.ivFullScreen);
+        pbAsync = findViewById(R.id.pbAsync);
+        ivBack = findViewById(R.id.ivBack);
+        buDecrypt = findViewById(R.id.buDecrypt);
+        buEncrypt = findViewById(R.id.buEncrypt);
+        buSelect = findViewById(R.id.buSelect);
+        ivDownload = findViewById(R.id.ivDownload);
+        //Create the list with the main views
+        mainViews = new ArrayList<>();
+        mainViews.add(ivEncrypt);
+        mainViews.add(buDecrypt);
+        mainViews.add(buEncrypt);
+        mainViews.add(buSelect);
+        mainViews.add(ivDownload);
+        mainViews.add(etData);
+    }
+
+    private void presetViews() {
+        ivFullScreen.setVisibility(View.GONE);
+        pbAsync.setVisibility(View.GONE);
+        ivBack.setVisibility(View.GONE);
+        ivBack.setEnabled(false);
     }
 
     private void setListeners() {
         //Image view to select image to encrypt
-        findViewById(R.id.ivEncrypt).setOnClickListener(new View.OnClickListener() {
+        ivEncrypt.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -69,7 +105,7 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             }
         });
 
-        findViewById(R.id.ivDownload).setOnTouchListener(new View.OnTouchListener() {
+        ivDownload.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
@@ -86,7 +122,7 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             }
         });
 
-        findViewById(R.id.ivBack).setOnClickListener(new View.OnClickListener() {
+        ivBack.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 makePictureDisappear();
@@ -95,61 +131,50 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
     }
 
     private void makePictureFullScreen() {
-        findViewById(R.id.ivEncrypt).setEnabled(false);
-        findViewById(R.id.buDecrypt).setEnabled(false);
-        findViewById(R.id.buEncrypt).setEnabled(false);
-        findViewById(R.id.buSelect).setEnabled(false);
-        findViewById(R.id.etData).setEnabled(false);
-        findViewById(R.id.ivDownload).setEnabled(false);
-        findViewById(R.id.ivEncrypt).setVisibility(View.GONE);
-        findViewById(R.id.buDecrypt).setVisibility(View.GONE);
-        findViewById(R.id.buEncrypt).setVisibility(View.GONE);
-        findViewById(R.id.buSelect).setVisibility(View.GONE);
-        findViewById(R.id.etData).setVisibility(View.GONE);
-        findViewById(R.id.ivDownload).setVisibility(View.GONE);
-        ImageView ivEncrypt = (ImageView) findViewById(R.id.ivFullScreen);
-        ivEncrypt.setImageBitmap(imageBitmap);
-        ivEncrypt.setVisibility(View.VISIBLE);
-        findViewById(R.id.ivBack).setEnabled(true);
-        findViewById(R.id.ivBack).setVisibility(View.VISIBLE);
+        disableMainUI();
+        hideMainUI();
+        ivFullScreen.setImageBitmap(imageBitmap);
+        ivFullScreen.setVisibility(View.VISIBLE);
+        ivBack.setEnabled(true);
+        ivBack.setVisibility(View.VISIBLE);
     }
 
     private void makePictureDisappear() {
-        findViewById(R.id.ivEncrypt).setEnabled(true);
-        findViewById(R.id.buDecrypt).setEnabled(true);
-        findViewById(R.id.buEncrypt).setEnabled(true);
-        findViewById(R.id.buSelect).setEnabled(true);
-        findViewById(R.id.etData).setEnabled(true);
-        findViewById(R.id.ivDownload).setEnabled(true);
-        findViewById(R.id.ivEncrypt).setVisibility(View.VISIBLE);
-        findViewById(R.id.buDecrypt).setVisibility(View.VISIBLE);
-        findViewById(R.id.buEncrypt).setVisibility(View.VISIBLE);
-        findViewById(R.id.buSelect).setVisibility(View.VISIBLE);
-        findViewById(R.id.etData).setVisibility(View.VISIBLE);
-        findViewById(R.id.ivDownload).setVisibility(View.VISIBLE);
-        ImageView ivEncrypt = (ImageView) findViewById(R.id.ivFullScreen);
-        ivEncrypt.setImageBitmap(imageBitmap);
-        ivEncrypt.setVisibility(View.GONE);
-        findViewById(R.id.ivBack).setVisibility(View.GONE);
-        findViewById(R.id.ivBack).setEnabled(false);
+        enableMainUI();
+        showMainUI();
+        ivFullScreen.setVisibility(View.GONE);
+        ivBack.setVisibility(View.GONE);
+        ivBack.setEnabled(false);
     }
 
     private void prepareForAsync() {
-        findViewById(R.id.pbAsync).setVisibility(View.VISIBLE);
-        findViewById(R.id.buDecrypt).setEnabled(false);
-        findViewById(R.id.buEncrypt).setEnabled(false);
-        findViewById(R.id.buSelect).setEnabled(false);
-        findViewById(R.id.etData).setEnabled(false);
-        findViewById(R.id.ivDownload).setEnabled(false);
+        pbAsync.setVisibility(View.VISIBLE);
+        disableMainUI();
     }
 
     private void restoreAfterAsync() {
-        findViewById(R.id.pbAsync).setVisibility(View.GONE);
-        findViewById(R.id.buDecrypt).setEnabled(true);
-        findViewById(R.id.buEncrypt).setEnabled(true);
-        findViewById(R.id.buSelect).setEnabled(true);
-        findViewById(R.id.etData).setEnabled(true);
-        findViewById(R.id.ivDownload).setEnabled(true);
+        pbAsync.setVisibility(View.GONE);
+        enableMainUI();
+    }
+
+    private void disableMainUI() {
+        for(View view: mainViews)
+            view.setEnabled(false);
+    }
+
+    private void enableMainUI() {
+        for(View view: mainViews)
+            view.setEnabled(true);
+    }
+
+    private void hideMainUI() {
+        for(View view: mainViews)
+            view.setVisibility(View.GONE);
+    }
+
+    private void showMainUI() {
+        for(View view: mainViews)
+            view.setVisibility(View.VISIBLE);
     }
 
     private void saveImagePermission() {
@@ -229,7 +254,6 @@ public class MainActivity extends AppCompatActivity implements AsyncPhotoAsyncRe
             imageBitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), pickedImageUri)
             .copy(Bitmap.Config.ARGB_8888, true);
 
-            ImageView ivEncrypt = (ImageView) findViewById(R.id.ivEncrypt);
             ivEncrypt.setImageBitmap(imageBitmap);
             // the setPixel() method was multiplying the red,green, and blue values
             // by the alpha, then only setting r,g,b.
