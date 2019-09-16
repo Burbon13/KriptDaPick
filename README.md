@@ -10,8 +10,6 @@ It takes the string (i.e. the message), converts it to a byte array and puts the
 
 ## UX
 
-### Main menu
-
 Firstly, the user has to select a picture. The picture can either be one which contains some hidden messages or not.
 
 For now, let's assume that the user selects an image without any hidden messages.
