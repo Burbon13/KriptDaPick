@@ -41,4 +41,5 @@ After the image is loaded, the user taps the "DECRYPT" button and the hidden mes
 <img src="readme_pictures/decrypted.jpeg" width="300">
 
 ## Technologies used
+- Android
 - Kotlin
